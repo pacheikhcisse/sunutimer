@@ -1,27 +1,35 @@
-var express = require('express'),
-    app = module.exports = express.createServer(express.logger()),
-    io = require('socket.io').listen(app);
+var express = require('express');
+var app = module.exports = express(),
+    http = require('http'),
+    server = http.createServer(app),
+    io = require('socket.io').listen(server);
     Stopwatch = require('./models/stopwatch'),
-    routes = require('./routes');
+    routes = require('./routes'),
+    errorHandler = require('errorhandler'),
+    bodyParser = require('body-parser'),
+    methodOverride = require('method-override');
 
 // Configuration
 
-app.configure(function() {
-  app.set('views', __dirname + '/views');
-  app.set('view engine', 'ejs');
-  app.use(express.bodyParser());
-  app.use(express.methodOverride());
-  app.use(app.router);
-  app.use(express.static(__dirname + '/public'));
-});
+app.set('views', __dirname + '/views');
+app.set('view engine', 'pug');
 
-app.configure('development', function() {
-  app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
-});
+app.use(bodyParser.json());
+app.use(methodOverride());
+app.use(express.static(__dirname + '/public'));
 
-app.configure('production', function() {
-  app.use(express.errorHandler());
-});
+// routing
+app.get('/', routes.index);
+app.get('/login', routes.login);
+
+
+if ('development' == app.get('env')) {
+    app.use(errorHandler({dumpExceptions: true, showStack: true}));
+}
+
+if ('production' == app.get('env')) {
+    app.use(errorHandler());
+}
 
 // Heroku won't actually allow us to use WebSockets
 // so we have to setup polling instead.
@@ -31,17 +39,20 @@ io.configure(function () {
   io.set("polling duration", 10); 
 });
 
-// Routes
 
 // Use the port that Heroku provides or default to 5000
 var port = process.env.PORT || 5000; 
-app.listen(port, function() {
-  console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
+/*app.listen(port, function() {
+  console.log("Express server listening on port %d in %s mode", app.settings.port, app.settings.env);
+});*/
+server.listen(port, function(){
+    console.log('Express server listening on port ' + port);
 });
 
-app.get('/', routes.index);
+
 
 var stopwatch = new Stopwatch();
+
 stopwatch.on('tick:stopwatch', function(time) {
   io.sockets.emit('time', { time: time });
 });
@@ -61,6 +72,7 @@ stopwatch.on('enable:stopwatch', function() {
 // stopwatch.start();
 
 io.sockets.on('connection', function (socket) {
+
   io.sockets.emit('time', { time: stopwatch.getTime() });
 
   socket.on('click:start', function () {

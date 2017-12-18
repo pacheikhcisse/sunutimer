@@ -39,7 +39,7 @@ Stopwatch.prototype.start = function() {
         return;
     }
 
-    this.time = this.startTime;
+    // this.time = this.startTime;
     console.log('Starting Stopwatch!');
     // note the use of _.bindAll in the constructor
     // with bindAll we can pass one of our methods to

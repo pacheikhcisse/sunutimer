@@ -1,0 +1,13 @@
+extends layout
+
+block content
+
+    .container
+        #countdown
+        #controls
+            input#startAt(type='text', value='000000')
+            input#endAt(type='text', value='000000')
+            input#set(type='button', value='Set')
+            .buttons
+                button#reset(class='thoughtbot') Reset
+                button#toggle(class='thoughtbot') Start
