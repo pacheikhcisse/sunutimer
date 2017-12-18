@@ -13,7 +13,10 @@ function Stopwatch() {
     this.hour = 3600000;
     this.minute = 60000;
     this.second = 1000;
-    this.time = this.hour;
+    // this.time = this.hour;
+    this.time = 0;
+    this.startTime = 0;
+    this.endTime = 0;
     this.interval = undefined;
 
     events.EventEmitter.call(this);
@@ -36,6 +39,7 @@ Stopwatch.prototype.start = function() {
         return;
     }
 
+    this.time = this.startTime;
     console.log('Starting Stopwatch!');
     // note the use of _.bindAll in the constructor
     // with bindAll we can pass one of our methods to
@@ -55,18 +59,26 @@ Stopwatch.prototype.stop = function() {
 
 Stopwatch.prototype.reset = function() {
     console.log('Resetting Stopwatch!');
-    this.time = this.hour;
+    this.time = this.startTime;
+    // this.time = this.hour;
     this.emit('reset:stopwatch', this.formatTime(this.time));
 };
 
 Stopwatch.prototype.onTick = function() {
-    this.time -= this.second;
+    if (this.startTime < this.endTime) {
+        this.time += this.second;
+    }
+    else if (this.startTime > this.endTime) {
+        this.time -= this.second;
+    }
 
     var formattedTime = this.formatTime(this.time);
     this.emit('tick:stopwatch', formattedTime);
     
-    if (this.time === 0) {
+    if (this.time === this.endTime) {
         this.stop();
+        this.emit('stop:stopwatch');
+        this.emit('enable:stopwatch');
     }
 };
 
@@ -97,6 +109,15 @@ Stopwatch.prototype.formatTime = function(time) {
 
 Stopwatch.prototype.getTime = function() {
     return this.formatTime(this.time);
+};
+
+Stopwatch.prototype.setStartTime = function (data) {
+    this.startTime = data;
+    this.time = data;
+};
+
+Stopwatch.prototype.setEndTime = function (data) {
+    this.endTime = data;
 };
 
 // ---------------------------------------------

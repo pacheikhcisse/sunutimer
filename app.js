@@ -50,20 +50,43 @@ stopwatch.on('reset:stopwatch', function(time) {
   io.sockets.emit('time', { time: time });
 });
 
-stopwatch.start();
+stopwatch.on('stop:stopwatch', function() {
+  io.sockets.emit('start');
+});
+
+stopwatch.on('enable:stopwatch', function() {
+  io.sockets.emit('enable');
+});
+
+// stopwatch.start();
 
 io.sockets.on('connection', function (socket) {
   io.sockets.emit('time', { time: stopwatch.getTime() });
 
   socket.on('click:start', function () {
+    io.sockets.emit('disable');
+    io.sockets.emit('stop');
     stopwatch.start();
   });
   
   socket.on('click:stop', function () {
+    io.sockets.emit('enable');
+    io.sockets.emit('start');
     stopwatch.stop();
   });
 
   socket.on('click:reset', function () {
+    io.sockets.emit('enable');
+    io.sockets.emit('start');
     stopwatch.reset();
+    stopwatch.stop();
   });
+
+  socket.on('click:set', function (data) {
+    io.sockets.emit('time', { time: stopwatch.formatTime(data.start) });
+    io.sockets.emit('interval', { start: data.start, end: data.end });
+    stopwatch.setStartTime(data.start);
+    stopwatch.setEndTime(data.end);
+  });
+
 });
